@@ -1,6 +1,15 @@
 import json
-from process import Process
+from process import Process, processNamePool
 import random
+
+nProc = 10
+with open("runData.json", "r") as file:
+    try:
+        assignedPIDs = json.load(file)["usedPID"]
+    except json.decoder.JSONDecodeError:
+        assignedPIDs = []
+    
+processes = {}
 
 def makeProcess():
     numOfCPUBursts = random.randint(5,15)
@@ -9,9 +18,18 @@ def makeProcess():
     for i in range(numOfCPUBursts):
         cpuBursts.append(random.randint(15,55))
         ioBursts.append(random.randint(30,90))
+    
+    pid = random.randint(100,1000)
+    while pid in assignedPIDs:
+        pid = random.randint(100,1000)
+    assignedPIDs.append(pid)
+    with open("runData.json", "w") as f:
+        json.dump({"usedPID":assignedPIDs}, f)
+    proc = Process(pid,processNamePool[random.randint(0,len(processNamePool)-1)], cpuBursts, ioBursts)
+    processes[pid] = proc
 
-    proc = Process("firefox", cpuBursts, ioBursts)
+for i in range(nProc):
+    makeProcess()
 
-    print(proc.processStats())
-
-makeProcess()
+with open("procData.json", "w") as f:
+    json.dump({pid: processes[pid].jsonFormat() for pid in processes}, f, indent=4)
