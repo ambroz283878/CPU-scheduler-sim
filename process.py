@@ -11,9 +11,9 @@ class Process():
         remainingCPUBurstTime = self.cpuBursts[self.cpuBurstID]
         remainingIOBurstTime = self.ioBursts[self.ioBurstID]
 
-    def updateCPUBurstTime(self):
+    def updateRemainingCPUTime(self):
         remainingCPUBurstTime -= 1
-    def updateIOBurstTime(self):
+    def updateRemainingIOTime(self):
         remainingIOBurstTime -= 1
 
     def setPID(self, pid):
