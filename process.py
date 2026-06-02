@@ -8,6 +8,14 @@ class Process():
         self.ioBursts = ioBursts
         self.cpuBurstID = 0
         self.ioBurstID = 0
+        remainingCPUBurstTime = self.cpuBursts[self.cpuBurstID]
+        remainingIOBurstTime = self.ioBursts[self.ioBurstID]
+
+    def updateCPUBurstTime(self):
+        remainingCPUBurstTime -= 1
+    def updateIOBurstTime(self):
+        remainingIOBurstTime -= 1
+
     def setPID(self, pid):
         self.pid = pid
     def nextCPUBurst(self):
