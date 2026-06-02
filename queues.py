@@ -3,6 +3,7 @@ class Queue():
     def __init__(self):
         self.elements = []
         self.length = 0
+        return self
     def advanceElement(self):
         self.length -= 1
         return self.elements.pop(0)
