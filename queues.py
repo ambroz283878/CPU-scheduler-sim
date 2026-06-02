@@ -3,33 +3,28 @@ class Queue():
     def __init__(self):
         self.elements = []
         self.length = 0
-        return self
-    def advanceElement(self):
+    
+    def listQueue(self):
+        lst = []
+        for i in self.elements:
+            lst.append(i.PID)
+        return lst
+
+    def removeElement(self, elem):
         self.length -= 1
-        return self.elements.pop(0)
+        self.elements.remove(elem)
     def addElement(self, pos: int, element: Process):
         self.elements.insert(pos, element)
         self.length += 1
 
-class fcfsQueue(Queue):
+class FcfsQueue(Queue):
     def __init__(self):
         super().__init__()
     def addElement(self, element: Process):
         super().addElement(self.length, element)
 
-class lcfsQueue(Queue):
+class LcfsQueue(Queue):
     def __init__(self):
         super().__init__()
     def addElement(self, element: Process):
         super().addElement(0, element)
-
-class waitingQueue(Queue):
-    def __init__(self):
-        super().__init__()
-    def advanceTime(self):
-        readyProcesses = []
-        for element in self.elements:
-            element.updateIOBurstTime()
-            if element.remainingIOBurstTime == 0:
-                readyProcesses.append(element)
-        return readyProcesses
