@@ -20,7 +20,8 @@ class CPU():
                 else:
                     self.dispatcher.addWaiting(self.currentProcess)
                 self.currentProcess = None
-            return 0
+            else:
+                return 0
         try:
             self.currentProcess = self.dispatcher.execReady()
             print(f"PROCESS LOADED\n    PID: {self.currentProcess.PID}")
