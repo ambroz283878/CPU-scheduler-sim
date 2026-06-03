@@ -5,7 +5,12 @@ import json
 with open("procData.json", "r") as f:
     procData = json.load(f)
 
-dispatcher = Dispatcher("fcfs")
+scheduler = input("Select scheduling algorithm (fcfs/lcfs): ")
+if scheduler not in ["fcfs", "lcfs"]:
+    raise ValueError(f"Provided algorithm '{scheduler}' is not supported or is invalid.")
+    exit(1)
+
+dispatcher = Dispatcher(scheduler)
 cpu = CPU(dispatcher)
 
 processes = {}
