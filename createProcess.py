@@ -11,6 +11,14 @@ with open("runData.json", "r") as file:
     
 processes = {}
 
+def distribution(param: tuple = (40, 15), low_cutoff:int = 20):
+    avg = param[0]
+    sigma = param[1]
+    x = int(random.normalvariate(avg,sigma))
+    if x < low_cutoff:
+        x += abs(x - avg)
+    return x
+
 def makeProcess():
     numOfCPUBursts = random.randint(5,15)
     cpuBursts = [random.randint(15,40)]
