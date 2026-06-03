@@ -24,6 +24,33 @@ class CPU():
             print("CPU IDLE")
         return 0
 
+class rrCPU(CPU):
+    def __init__(self, dispatcher: Dispatcher, quantum: int):
+        super().__init__(dispatcher)
+        self.quantum = quantum
+        self.timeRemaining = quantum
+
+    def run(self):
+        if self.currentProcess != None:
+            self.currentProcess.updateRemainingCPUTime()
+            if self.currentProcess.remainingCPUBurstTime == 0:
+                if (self.currentProcess.cpuBurstID+1 == len(self.currentProcess.cpuBursts)):
+                    self.dispatcher.addTerminated(self.currentProcess)
+                else:
+                    self.dispatcher.addWaiting(self.currentProcess)
+                self.currentProcess = None
+            elif self.timeRemaining == 0:
+                self.dispatcher.addReady(self.currentProcess)
+                self.currentProcess = None
+                self.timeRemaining = self.quantum
+            return 0
+        try:
+            self.currentProcess = self.dispatcher.execReady()
+            print(f"PROCESS LOADED\n    PID: {self.currentProcess.PID}")
+        except IndexError:
+            print("CPU IDLE")
+        return 0
+
 class Dispatcher():
     def __init__(self, schedulingAlgorithm: str):
         self.waiting = Queue()
@@ -34,6 +61,10 @@ class Dispatcher():
                 self.readyQueue = FcfsQueue()
             case "lcfs":
                 self.readyQueue = LcfsQueue()
+            case "sjf":
+                pass
+            case "rr":
+                self.readyQueue = FcfsQueue()
             case _:
                 raise ValueError(f"Provided algorithm '{self.algorithm}' is not supported or is invalid.")
     
@@ -59,7 +90,6 @@ DISPATCHER STATUS:
     Ready processes (n: {self.readyQueue.len()}):
         {self.readyQueue.listQueue()}
 """)
-
 
     def dispatch(self):
         for proc in self.waiting.elements:

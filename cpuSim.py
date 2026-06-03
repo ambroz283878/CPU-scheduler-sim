@@ -1,17 +1,19 @@
-from cpu import CPU, Dispatcher
+from cpu import CPU, rrCPU, Dispatcher
 from process import Process
 import json
+
+scheduler = input("Select scheduling algorithm (fcfs/lcfs/rr): ")
+if scheduler not in ["fcfs", "lcfs", "rr"]:
+    raise ValueError(f"Provided algorithm '{scheduler}' is not supported or is invalid.")
 
 with open("procData.json", "r") as f:
     procData = json.load(f)
 
-scheduler = input("Select scheduling algorithm (fcfs/lcfs): ")
-if scheduler not in ["fcfs", "lcfs"]:
-    raise ValueError(f"Provided algorithm '{scheduler}' is not supported or is invalid.")
-    exit(1)
-
 dispatcher = Dispatcher(scheduler)
-cpu = CPU(dispatcher)
+if scheduler == "rr":
+    cpu = rrCPU(dispatcher, 50)
+else: 
+    cpu = CPU(Dispatcher)
 
 processes = {}
 
