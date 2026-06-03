@@ -11,9 +11,9 @@ with open("procData.json", "r") as f:
 
 dispatcher = Dispatcher(scheduler)
 if scheduler == "rr":
-    cpu = rrCPU(dispatcher, 50)
+    cpu = rrCPU(dispatcher, 35)
 else: 
-    cpu = CPU(Dispatcher)
+    cpu = CPU(dispatcher)
 
 processes = {}
 
@@ -29,6 +29,8 @@ while (dispatcher.readyQueue.len()+dispatcher.waiting.len() > 0 or cpu.currentPr
     dispatcher.dispatch()
     cpu.run()
 
-dispatcher.qStatus()  
 for i in dispatcher.terminated.elements:
     print(i.processStats())
+
+dispatcher.qStatus()
+cpu.cpuStats()

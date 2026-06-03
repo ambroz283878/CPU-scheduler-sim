@@ -6,13 +6,17 @@ class CPU():
         self.currentProcess : Process = None
         self.timeRemaining = 0
         self.dispatcher = dispatcher
+        self.totalCPUtime = 0
+        self.completedProcesses = 0
 
     def run(self):
+        self.totalCPUtime +=1
         if self.currentProcess != None:
             self.currentProcess.updateRemainingCPUTime()
             if self.currentProcess.remainingCPUBurstTime == 0:
                 if (self.currentProcess.cpuBurstID+1 == len(self.currentProcess.cpuBursts)):
                     self.dispatcher.addTerminated(self.currentProcess)
+                    self.completedProcesses += 1
                 else:
                     self.dispatcher.addWaiting(self.currentProcess)
                 self.currentProcess = None
@@ -23,25 +27,39 @@ class CPU():
         except IndexError:
             print("CPU IDLE")
         return 0
+    def cpuStats(self):
+        waiting = 0.
+        for i in self.dispatcher.terminated.elements:
+            waiting += i.readyWaitTime
+        print(f"""CPU STATS:
+    {self.completedProcesses} processes completed in {self.totalCPUtime} ms CPU time
+    Average ready waiting time: {waiting/self.completedProcesses}
+    """)
 
-class rrCPU(CPU):
+class rrCPU(CPU): #Round Robin CPU
     def __init__(self, dispatcher: Dispatcher, quantum: int):
         super().__init__(dispatcher)
+        self.interruptionCount = 0
         self.quantum = quantum
         self.timeRemaining = quantum
 
     def run(self):
+        self.totalCPUtime +=1
         if self.currentProcess != None:
             self.currentProcess.updateRemainingCPUTime()
+            self.timeRemaining -= 1
             if self.currentProcess.remainingCPUBurstTime == 0:
                 if (self.currentProcess.cpuBurstID+1 == len(self.currentProcess.cpuBursts)):
                     self.dispatcher.addTerminated(self.currentProcess)
+                    self.completedProcesses += 1
                 else:
                     self.dispatcher.addWaiting(self.currentProcess)
+                self.timeRemaining = self.quantum
                 self.currentProcess = None
             elif self.timeRemaining == 0:
                 self.dispatcher.addReady(self.currentProcess)
                 self.currentProcess = None
+                self.interruptionCount +=1
                 self.timeRemaining = self.quantum
             return 0
         try:
@@ -50,6 +68,11 @@ class rrCPU(CPU):
         except IndexError:
             print("CPU IDLE")
         return 0
+    def cpuStats(self):
+        super().cpuStats()
+        print(f"""
+    Round Robin time quantum: {self.quantum} ms
+    Number of RR interruptions: {self.interruptionCount}""")
 
 class Dispatcher():
     def __init__(self, schedulingAlgorithm: str):
