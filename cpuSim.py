@@ -18,8 +18,10 @@ for i in procData:
 for i in processes:
     dispatcher.addReady(processes[i])
 
-while (dispatcher.readyQueue.length+dispatcher.waiting.length > 0 or cpu.currentProcess != None):
+while (dispatcher.readyQueue.len()+dispatcher.waiting.len() > 0 or cpu.currentProcess != None):
     dispatcher.dispatch()
     cpu.run()
 
-dispatcher.qStatus()
+dispatcher.qStatus()  
+for i in dispatcher.terminated.elements:
+    print(i.processStats())

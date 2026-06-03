@@ -8,7 +8,7 @@ class Process():
         self.ioBursts = ioBursts
         self.cpuBurstID = 0
         self.ioBurstID = 0
-        self.totalExecTime = 0
+        self.readyWaitTime = 0
         self.remainingCPUBurstTime = self.cpuBursts[self.cpuBurstID]
         self.remainingIOBurstTime = self.ioBursts[self.ioBurstID]
 
@@ -16,15 +16,22 @@ class Process():
         self.remainingCPUBurstTime -= 1
     def updateRemainingIOTime(self):
         self.remainingIOBurstTime -= 1
+    def updateReadyWaitTime(self):
+        self.readyWaitTime += 1
 
     def setPID(self, pid):
         self.pid = pid
     def nextCPUBurst(self):
         self.cpuBurstID += 1
-        return self.cpuBursts[self.cpuBurstID]
+        self.remainingCPUBurstTime = self.cpuBursts[self.cpuBurstID]
+        return self.remainingCPUBurstTime
     def nextIOBurst(self):
         self.ioBurstID += 1
-        return self.ioBursts[self.ioBurstID]
+        try:
+            self.remainingIOBurstTime = self.ioBursts[self.ioBurstID]
+            return self.remainingIOBurstTime
+        except IndexError:
+            return None
     def processStats(self):
         return f"""---------
 Process stats:
@@ -34,7 +41,8 @@ Process stats:
         Total CPU time: {sum(self.cpuBursts)}
     IO Bursts: {self.ioBursts}
         Total IO wait time: {sum(self.ioBursts)}
-    Minimal execution time: {self.totalExecTime}
+    Minimal execution time: {sum(self.cpuBursts)+sum(self.ioBursts)}
+    Observed execution time: {self.readyWaitTime}
 ---------
 """
     def jsonFormat(self):

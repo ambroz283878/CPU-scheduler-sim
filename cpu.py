@@ -6,8 +6,7 @@ class CPU():
         self.currentProcess : Process = None
         self.timeRemaining = 0
         self.dispatcher = dispatcher
-    def advanceTime(self):
-        pass
+
     def run(self):
         if self.currentProcess != None:
             self.currentProcess.updateRemainingCPUTime()
@@ -19,7 +18,7 @@ class CPU():
                 self.currentProcess = None
             return 0
         try:
-            self.currentProcess = self.dispatcher.readyQueue.elements[0]
+            self.currentProcess = self.dispatcher.execReady()
             print(f"PROCESS LOADED\n    PID: {self.currentProcess.PID}")
         except IndexError:
             print("CPU IDLE")
@@ -39,22 +38,25 @@ class Dispatcher():
                 raise ValueError(f"Provided algorithm '{self.algorithm}' is not supported or is invalid.")
     
     def addTerminated(self, proc: Process):
-        self.terminated.addElement(self.terminated.length, proc)
+        self.terminated.addElement(self.terminated.len(), proc)
 
     def addWaiting(self, proc: Process):
-        self.waiting.addElement(self.waiting.length, proc)
+        self.waiting.addElement(self.waiting.len(), proc)
 
     def addReady(self, proc: Process):
         self.readyQueue.addElement(proc)
 
+    def execReady(self):
+        return self.readyQueue.removeElement(0)
+
     def qStatus(self):
         print(f"""
 DISPATCHER STATUS:
-    Terminated processes (n {self.terminated.length}):
+    Terminated processes (n {self.terminated.len()}):
         {self.terminated.listQueue()}
-    Waiting processes (n: {self.waiting.length}):
+    Waiting processes (n: {self.waiting.len()}):
         {self.waiting.listQueue()}
-    Ready processes (n: {self.readyQueue.length}):
+    Ready processes (n: {self.readyQueue.len()}):
         {self.readyQueue.listQueue()}
 """)
 
@@ -66,4 +68,6 @@ DISPATCHER STATUS:
                 proc.nextCPUBurst()
                 proc.nextIOBurst()
                 self.readyQueue.addElement(proc)
-                self.waiting.elements.remove(proc)
+                self.waiting.removeElement(self.waiting.elements.index(proc))
+        for proc in self.readyQueue.elements:
+            proc.updateReadyWaitTime()
