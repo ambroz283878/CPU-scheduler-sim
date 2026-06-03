@@ -20,12 +20,12 @@ def distribution(param: tuple = (40, 15), low_cutoff:int = 20):
     return x
 
 def makeProcess():
-    numOfCPUBursts = random.randint(5,15)
-    cpuBursts = [random.randint(15,40)]
+    numOfCPUBursts = random.randint(8,20)
+    cpuBursts = [distribution()]
     ioBursts = []
     for i in range(numOfCPUBursts):
-        cpuBursts.append(random.randint(15,55))
-        ioBursts.append(random.randint(30,90))
+        cpuBursts.append(distribution())
+        ioBursts.append(distribution((80,30),40))
     
     pid = random.randint(100,1000)
     while pid in assignedPIDs:
