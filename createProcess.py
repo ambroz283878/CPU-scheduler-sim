@@ -23,12 +23,11 @@ def distribution(param: tuple = (40, 15), low_cutoff:int = 20):
     return x
 
 def makeProcess(dist):
-    
     numOfCPUBursts = random.randint(8,20)
-    cpuBursts = [distribution()]
+    cpuBursts = [distribution(dist[0], dist[1])]
     ioBursts = []
     for i in range(numOfCPUBursts):
-        cpuBursts.append(distribution())
+        cpuBursts.append(distribution(dist[0], dist[1]))
         ioBursts.append(distribution((80,30),40))
     
     pid = random.randint(100,1000)
@@ -40,8 +39,10 @@ def makeProcess(dist):
     proc = Process(pid,processNamePool[random.randint(0,len(processNamePool)-1)], cpuBursts, ioBursts)
     processes[pid] = proc
 
-for i in range(nProc):
-    makeProcess()
+for i in range(nCPUBound):
+    makeProcess(cpuBoundDist)
+for i in range(nIOBound):
+    makeProcess(ioBoundDist)
 
 with open("procData.json", "w") as f:
     json.dump({pid: processes[pid].jsonFormat() for pid in processes}, f, indent=4)
