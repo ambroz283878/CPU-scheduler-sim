@@ -2,7 +2,10 @@ import json
 from cpu import Process, processNamePool
 import random
 
-nProc = 10
+nIOBound = 20
+ioBoundDist = [(40,15), 20]
+nCPUBound = 10
+cpuBoundDist = [(60,15), 40]
 with open("runData.json", "r") as file:
     try:
         assignedPIDs = json.load(file)["usedPID"]
@@ -19,7 +22,8 @@ def distribution(param: tuple = (40, 15), low_cutoff:int = 20):
         x += abs(x - avg)
     return x
 
-def makeProcess():
+def makeProcess(dist):
+    
     numOfCPUBursts = random.randint(8,20)
     cpuBursts = [distribution()]
     ioBursts = []
