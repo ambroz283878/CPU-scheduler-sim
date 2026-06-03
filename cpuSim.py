@@ -1,5 +1,4 @@
-from cpu import CPU, rrCPU, Dispatcher
-from process import Process
+from cpu import CPU, rrCPU, Dispatcher, Process
 import json
 
 scheduler = input("Select scheduling algorithm (fcfs/lcfs/rr): ")

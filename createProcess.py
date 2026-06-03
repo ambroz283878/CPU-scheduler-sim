@@ -1,5 +1,5 @@
 import json
-from process import Process, processNamePool
+from cpu import Process, processNamePool
 import random
 
 nProc = 10
