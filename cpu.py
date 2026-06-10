@@ -4,13 +4,13 @@ class Process():
     def __init__(self,PID: int, name: str, cpuBursts: list, ioBursts: list):
         self.PID = PID
         self.name = name
-        self.cpuBursts = cpuBursts
-        self.ioBursts = ioBursts
-        self.cpuBurstID = 0
-        self.ioBurstID = 0
-        self.readyWaitTime = 0
-        self.remainingCPUBurstTime = self.cpuBursts[self.cpuBurstID]
-        self.remainingIOBurstTime = self.ioBursts[self.ioBurstID]
+        self.cpuBursts = cpuBursts # array with lengths of process' cpu bursts
+        self.ioBursts = ioBursts # array with lengths of process' io bursts
+        self.cpuBurstID = 0 # current cpu burst index
+        self.ioBurstID = 0 # current io burst index
+        self.readyWaitTime = 0 # time spent waiting in ready queue
+        self.remainingCPUBurstTime = self.cpuBursts[self.cpuBurstID] # time remaining in current cpu burst
+        self.remainingIOBurstTime = self.ioBursts[self.ioBurstID] # time remaining in current io burst
 
     def updateRemainingCPUTime(self):
         self.remainingCPUBurstTime -= 1
@@ -21,11 +21,11 @@ class Process():
 
     def setPID(self, pid):
         self.pid = pid
-    def nextCPUBurst(self):
+    def nextCPUBurst(self): # move to next cpu burst
         self.cpuBurstID += 1
         self.remainingCPUBurstTime = self.cpuBursts[self.cpuBurstID]
         return self.remainingCPUBurstTime
-    def nextIOBurst(self):
+    def nextIOBurst(self): # move to next io burst
         self.ioBurstID += 1
         try:
             self.remainingIOBurstTime = self.ioBursts[self.ioBurstID]
@@ -45,7 +45,7 @@ Process stats:
     Observed execution time: {self.readyWaitTime}
 ---------
 """
-    def jsonFormat(self):
+    def jsonFormat(self): # process info in JSON format
         return {
             "PID":self.PID,
             "name":self.name,
@@ -74,40 +74,40 @@ class Queue():
 class FcfsQueue(Queue):
     def __init__(self):
         super().__init__()
-    def addElement(self, element: Process):
+    def addElement(self, element: Process): # add element at the end of array of processes
         super().addElement(self.len(), element)
 
 class LcfsQueue(Queue):
     def __init__(self):
         super().__init__()
-    def addElement(self, element: Process):
+    def addElement(self, element: Process): # add element at the beggining of array of processes
         super().addElement(0, element)
 
-class CPU():
+class CPU(): # standard CPU
     def __init__(self, dispatcher: Dispatcher):
-        self.currentProcess : Process = None
-        self.timeRemaining = 0
+        self.currentProcess : Process = None # address register (program counter)
+        self.timeRemaining = 0 # time remaining in current burst
         self.dispatcher = dispatcher
-        self.totalCPUtime = 0
-        self.completedProcesses = 0
+        self.totalCPUtime = 0 # CPU time counter
+        self.completedProcesses = 0 # completed processes counter
 
-    def run(self):
+    def run(self): # every tick:
         self.totalCPUtime +=1
-        if self.currentProcess != None:
+        if self.currentProcess != None: # if there is a process in address register - keep executing and check remaining burst time
             self.currentProcess.updateRemainingCPUTime()
-            if self.currentProcess.remainingCPUBurstTime == 0:
-                if (self.currentProcess.cpuBurstID+1 == len(self.currentProcess.cpuBursts)):
+            if self.currentProcess.remainingCPUBurstTime == 0: # if finished burst:
+                if (self.currentProcess.cpuBurstID+1 == len(self.currentProcess.cpuBursts)): # if process finished execution, add it to terminated processes list
                     self.dispatcher.addTerminated(self.currentProcess)
                     self.completedProcesses += 1
-                else:
+                else: # tell the process to move to next burst and add it to waiting queue
                     self.dispatcher.addWaiting(self.currentProcess)
                 self.currentProcess = None
             else:
                 return 0
-        try:
+        try: # if register is empty - load process from ready queue
             self.currentProcess = self.dispatcher.execReady()
             print(f"PROCESS LOADED\n    PID: {self.currentProcess.PID}")
-        except IndexError:
+        except IndexError: # except when ready queue is empty:
             print("CPU IDLE")
         return 0
     def cpuStats(self):
@@ -126,24 +126,24 @@ class rrCPU(CPU): #Round Robin CPU
         self.quantum = quantum
         self.timeRemaining = quantum
 
-    def run(self):
+    def run(self): # every tick:
         self.totalCPUtime +=1
-        if self.currentProcess != None:
+        if self.currentProcess != None: # if there is a process in address register - keep executing and check remaining burst time
             self.currentProcess.updateRemainingCPUTime()
             self.timeRemaining -= 1
-            if self.currentProcess.remainingCPUBurstTime == 0:
-                if (self.currentProcess.cpuBurstID+1 == len(self.currentProcess.cpuBursts)):
+            if self.currentProcess.remainingCPUBurstTime == 0: # if process finished burst faster than time quantum:
+                if (self.currentProcess.cpuBurstID+1 == len(self.currentProcess.cpuBursts)): # if process finished execution, add it to terminated processes list
                     self.dispatcher.addTerminated(self.currentProcess)
                     self.completedProcesses += 1
-                else:
+                else: # tell the process to move to next burst and add it to waiting queue
                     self.dispatcher.addWaiting(self.currentProcess)
-                self.timeRemaining = self.quantum
-                self.currentProcess = None
-            elif self.timeRemaining == 0:
-                self.dispatcher.addReady(self.currentProcess)
-                self.currentProcess = None
-                self.interruptionCount +=1
-                self.timeRemaining = self.quantum
+                self.timeRemaining = self.quantum # reset remaining RR time to time quantum
+                self.currentProcess = None # remove process from registry
+            elif self.timeRemaining == 0: # if RR time is up:
+                self.dispatcher.addReady(self.currentProcess) # add interrupted process to ready queue
+                self.currentProcess = None  # remove process from registry
+                self.interruptionCount +=1 # register RR interuption
+                self.timeRemaining = self.quantum # reset remaining RR time to time quantum
             return 0
         try:
             self.currentProcess = self.dispatcher.execReady()
@@ -162,7 +162,7 @@ class Dispatcher():
         self.waiting = Queue()
         self.terminated = Queue()
         self.algorithm = schedulingAlgorithm
-        match self.algorithm:
+        match self.algorithm: # create ready queue matching selected algorithm
             case "fcfs":
                 self.readyQueue = FcfsQueue()
             case "lcfs":
@@ -200,10 +200,10 @@ DISPATCHER STATUS:
     def dispatch(self):
         for proc in self.waiting.elements:
             proc.updateRemainingIOTime()
-            if proc.remainingIOBurstTime == 0:
-                proc.nextCPUBurst()
-                proc.nextIOBurst()
-                self.readyQueue.addElement(proc)
-                self.waiting.removeElement(self.waiting.elements.index(proc))
+            if proc.remainingIOBurstTime == 0: # if process in waiting queue is done with io burst:
+                proc.nextCPUBurst() # update CPU burst indicator 
+                proc.nextIOBurst() # update IO burst indicator
+                self.readyQueue.addElement(proc) # add process to ready queue
+                self.waiting.removeElement(self.waiting.elements.index(proc)) # remove process from waiting queue
         for proc in self.readyQueue.elements:
             proc.updateReadyWaitTime()
