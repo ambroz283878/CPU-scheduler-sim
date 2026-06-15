@@ -28,8 +28,8 @@ while (dispatcher.readyQueue.len()+dispatcher.waiting.len() > 0 or cpu.currentPr
     dispatcher.dispatch()
     cpu.run()
 
-for i in dispatcher.terminated.elements: # display process stats of all terminated processes
-    print(i.processStats())
+#for i in dispatcher.terminated.elements: # display process stats of all terminated processes
+#    print(i.processStats())
 
-dispatcher.qStatus() # display dispatcher stats
+#dispatcher.qStatus() # display dispatcher stats
 cpu.cpuStats() # display cpu stats
