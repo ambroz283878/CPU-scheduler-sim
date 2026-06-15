@@ -9,21 +9,26 @@ class Process():
         self.cpuBurstID = 0 # current cpu burst index
         self.ioBurstID = 0 # current io burst index
         self.readyWaitTime = 0 # time spent waiting in ready queue
+        self.responseTime = [0]*len(self.cpuBursts)
         self.remainingCPUBurstTime = self.cpuBursts[self.cpuBurstID] # time remaining in current cpu burst
         self.remainingIOBurstTime = self.ioBursts[self.ioBurstID] # time remaining in current io burst
-
+        self.interrupted=False
+    def interrupt(self):
+        self.interrupted=True
     def updateRemainingCPUTime(self):
         self.remainingCPUBurstTime -= 1
     def updateRemainingIOTime(self):
         self.remainingIOBurstTime -= 1
     def updateReadyWaitTime(self):
         self.readyWaitTime += 1
-
+    def updateBurstWaitTime(self):
+        self.responseTime[self.cpuBurstID] += 1
     def setPID(self, pid):
         self.pid = pid
     def nextCPUBurst(self): # move to next cpu burst
         self.cpuBurstID += 1
         self.remainingCPUBurstTime = self.cpuBursts[self.cpuBurstID]
+        self.interrupted=False
         return self.remainingCPUBurstTime
     def nextIOBurst(self): # move to next io burst
         self.ioBurstID += 1
@@ -43,6 +48,7 @@ Process stats:
         Total IO wait time: {sum(self.ioBursts)}
     Minimal execution time: {sum(self.cpuBursts)+sum(self.ioBursts)}
     Observed execution time: {self.readyWaitTime}
+    Average response time: {sum(self.responseTime)/len(self.responseTime)}
 ---------
 """
     def jsonFormat(self): # process info in JSON format
@@ -50,7 +56,8 @@ Process stats:
             "PID":self.PID,
             "name":self.name,
             "cpuBursts":self.cpuBursts,
-            "ioBursts":self.ioBursts
+            "ioBursts":self.ioBursts,
+            "avgBurstWaitTime":sum(self.responseTime)/len(self.responseTime)
         }
 
 class Queue():
@@ -89,6 +96,7 @@ class CPU(): # standard CPU
         self.timeRemaining = 0 # time remaining in current burst
         self.dispatcher = dispatcher
         self.totalCPUtime = 0 # CPU time counter
+        self.idleTime = 0
         self.completedProcesses = 0 # completed processes counter
 
     def run(self): # every tick:
@@ -108,15 +116,21 @@ class CPU(): # standard CPU
             self.currentProcess = self.dispatcher.execReady()
             print(f"PROCESS LOADED\n    PID: {self.currentProcess.PID}")
         except IndexError: # except when ready queue is empty:
+            self.idleTime+=1
             print("CPU IDLE")
         return 0
     def cpuStats(self):
         waiting = 0.
-        for i in self.dispatcher.terminated.elements:
-            waiting += i.readyWaitTime
+        responseTime = 0.
+        for proc in self.dispatcher.terminated.elements:
+            waiting += proc.readyWaitTime
+            responseTime += sum(proc.responseTime)/len(proc.responseTime)
         print(f"""CPU STATS:
     {self.completedProcesses} processes completed in {self.totalCPUtime} ms CPU time
-    Average ready waiting time: {waiting/self.completedProcesses}
+    Idle time: {self.idleTime}
+    Average total ready wait time: {waiting/self.completedProcesses}
+    Average response time: {responseTime/self.completedProcesses}
+    Throughput (proc/1000ms): {1000*(self.completedProcesses/self.totalCPUtime)}
     """)
 
 class rrCPU(CPU): #Round Robin CPU
@@ -139,7 +153,9 @@ class rrCPU(CPU): #Round Robin CPU
                     self.dispatcher.addWaiting(self.currentProcess)
                 self.timeRemaining = self.quantum # reset remaining RR time to time quantum
                 self.currentProcess = None # remove process from registry
+                return 0
             elif self.timeRemaining == 0: # if RR time is up:
+                self.currentProcess.interrupt()
                 self.dispatcher.addReady(self.currentProcess) # add interrupted process to ready queue
                 self.currentProcess = None  # remove process from registry
                 self.interruptionCount +=1 # register RR interuption
@@ -150,6 +166,7 @@ class rrCPU(CPU): #Round Robin CPU
             print(f"PROCESS LOADED\n    PID: {self.currentProcess.PID}")
         except IndexError:
             print("CPU IDLE")
+            self.idleTime+=1
         return 0
     def cpuStats(self):
         super().cpuStats()
@@ -198,12 +215,17 @@ DISPATCHER STATUS:
 """)
 
     def dispatch(self):
+        finished_io = [proc for proc in self.waiting.elements
+                   if proc.remainingIOBurstTime <= 1]
+        for proc in finished_io:
+            proc.updateRemainingIOTime()
+            proc.nextCPUBurst() # update CPU burst indicator 
+            proc.nextIOBurst() # update IO burst indicator
+            self.readyQueue.addElement(proc) # add process to ready queue
+            self.waiting.removeElement(self.waiting.elements.index(proc)) # remove process from waiting queue
         for proc in self.waiting.elements:
             proc.updateRemainingIOTime()
-            if proc.remainingIOBurstTime == 0: # if process in waiting queue is done with io burst:
-                proc.nextCPUBurst() # update CPU burst indicator 
-                proc.nextIOBurst() # update IO burst indicator
-                self.readyQueue.addElement(proc) # add process to ready queue
-                self.waiting.removeElement(self.waiting.elements.index(proc)) # remove process from waiting queue
         for proc in self.readyQueue.elements:
             proc.updateReadyWaitTime()
+            if not proc.interrupted:
+                proc.updateBurstWaitTime()
