@@ -3,9 +3,9 @@ from cpu import Process, processNamePool
 import random
 
 nIOBound = 20
-ioBoundDist = [(40,15), 20]
+ioBoundDist = [(40,10), 20]
 nCPUBound = 10
-cpuBoundDist = [(60,15), 40]
+cpuBoundDist = [(80,15), 40]
 with open("runData.json", "r") as file:
     try:
         assignedPIDs = json.load(file)["usedPID"]
