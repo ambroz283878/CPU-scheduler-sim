@@ -216,7 +216,7 @@ DISPATCHER STATUS:
 
     def dispatch(self):
         finished_io = [proc for proc in self.waiting.elements
-                   if proc.remainingIOBurstTime <= 1]
+            if proc.remainingIOBurstTime == 1]
         for proc in finished_io:
             proc.updateRemainingIOTime()
             proc.nextCPUBurst() # update CPU burst indicator 
