@@ -114,22 +114,24 @@ class CPU(): # standard CPU
                 return 0
         try: # if register is empty - load process from ready queue
             self.currentProcess = self.dispatcher.execReady()
-            print(f"PROCESS LOADED\n    PID: {self.currentProcess.PID}")
+            #print(f"PROCESS LOADED\n    PID: {self.currentProcess.PID}")
         except IndexError: # except when ready queue is empty:
             self.idleTime+=1
-            print("CPU IDLE")
+            #print("CPU IDLE")
         return 0
     def cpuStats(self):
         waiting = 0.
-        responseTime = 0.
+        responseTime = 0
+        burstCount = 0
         for proc in self.dispatcher.terminated.elements:
             waiting += proc.readyWaitTime
-            responseTime += sum(proc.responseTime)/len(proc.responseTime)
+            responseTime += sum(proc.responseTime[:-1])
+            burstCount += len(proc.responseTime)-1
         print(f"""CPU STATS:
     {self.completedProcesses} processes completed in {self.totalCPUtime} ms CPU time
     Idle time: {self.idleTime}
     Average total ready wait time: {waiting/self.completedProcesses}
-    Average response time: {responseTime/self.completedProcesses}
+    Average response time: {responseTime/burstCount}
     Throughput (proc/1000ms): {1000*(self.completedProcesses/self.totalCPUtime)}
     """)
 
