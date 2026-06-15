@@ -2,9 +2,9 @@ import json
 from cpu import Process, processNamePool
 import random
 
-nIOBound = 20
+nIOBound = 100
 ioBoundDist = [(40,10), 20]
-nCPUBound = 10
+nCPUBound = 50
 cpuBoundDist = [(80,15), 40]
 with open("runData.json", "r") as file:
     try:
