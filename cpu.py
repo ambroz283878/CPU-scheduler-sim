@@ -165,9 +165,9 @@ class rrCPU(CPU): #Round Robin CPU
             return 0
         try:
             self.currentProcess = self.dispatcher.execReady()
-            print(f"PROCESS LOADED\n    PID: {self.currentProcess.PID}")
+            #print(f"PROCESS LOADED\n    PID: {self.currentProcess.PID}")
         except IndexError:
-            print("CPU IDLE")
+            #print("CPU IDLE")
             self.idleTime+=1
         return 0
     def cpuStats(self):
