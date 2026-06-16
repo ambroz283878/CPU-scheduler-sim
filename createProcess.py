@@ -1,6 +1,8 @@
 import json
 from cpu import Process, processNamePool
 import random
+import matplotlib.pyplot as plt
+from collections import Counter
 
 nIOBound = 100
 ioBoundDist = [(40,10), 20]
@@ -46,5 +48,18 @@ for i in range(nCPUBound):
 for i in range(nIOBound):
     makeProcess(ioBoundDist, ioBoundDist2)
 
+data = []
+for i in processes.values():
+    for j in i.cpuBursts:
+        data.append(j)
+
+c = Counter(data)
+labels = list(c.keys())
+values = list(c.values())
+plt.bar(labels,values)
+plt.xlabel("Długość serii")
+plt.ylabel("Liczba wystąpień")
+
+plt.show()
 with open("procData.json", "w") as f:
     json.dump({pid: processes[pid].jsonFormat() for pid in processes}, f, indent=4)
