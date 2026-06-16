@@ -4,8 +4,10 @@ import random
 
 nIOBound = 100
 ioBoundDist = [(40,10), 20]
+ioBoundDist2 = [(90,30),40]
 nCPUBound = 50
 cpuBoundDist = [(80,15), 40]
+cpuBoundDist2 = [(40,15), 30]
 with open("runData.json", "r") as file:
     try:
         assignedPIDs = json.load(file)["usedPID"]
@@ -22,13 +24,13 @@ def distribution(param: tuple = (40, 15), low_cutoff:int = 20):
         x += abs(x - avg)
     return x
 
-def makeProcess(dist):
+def makeProcess(cpuDist: list[tuple,str],ioDist: list[tuple,str]):
     numOfCPUBursts = random.randint(8,20)
-    cpuBursts = [distribution(dist[0], dist[1])]
+    cpuBursts = [distribution(cpuDist[0], cpuDist[1])]
     ioBursts = []
     for i in range(numOfCPUBursts):
-        cpuBursts.append(distribution(dist[0], dist[1]))
-        ioBursts.append(distribution((80,30),40))
+        cpuBursts.append(distribution(cpuDist[0], cpuDist[1]))
+        ioBursts.append(distribution(ioDist[0],ioDist[1]))
     
     pid = random.randint(100,1000)
     while pid in assignedPIDs:
@@ -40,9 +42,9 @@ def makeProcess(dist):
     processes[pid] = proc
 
 for i in range(nCPUBound):
-    makeProcess(cpuBoundDist)
+    makeProcess(cpuBoundDist, cpuBoundDist2)
 for i in range(nIOBound):
-    makeProcess(ioBoundDist)
+    makeProcess(ioBoundDist, ioBoundDist2)
 
 with open("procData.json", "w") as f:
     json.dump({pid: processes[pid].jsonFormat() for pid in processes}, f, indent=4)
