@@ -10,7 +10,7 @@ with open("procData.json", "r") as f: # load process Data form json file
 
 dispatcher = Dispatcher(scheduler) # initialize Dispatcher and CPU
 if scheduler == "rr":
-    cpu = rrCPU(dispatcher, 80)
+    cpu = rrCPU(dispatcher, 60)
 else: 
     cpu = CPU(dispatcher)
 
